@@ -68,6 +68,32 @@ async function main() {
       console.error(`Error seeding data for ${modelName}:`, error);
     }
   }
+
+  await resetSequences();
+}
+
+async function resetSequences() {
+  const tables = [
+    { name: "User", idCol: "userId" },
+    { name: "Team", idCol: "id" },
+    { name: "Project", idCol: "id" },
+    { name: "ProjectTeam", idCol: "id" },
+    { name: "Task", idCol: "id" },
+    { name: "TaskAssignment", idCol: "id" },
+    { name: "Attachment", idCol: "id" },
+    { name: "Comment", idCol: "id" },
+  ];
+
+  for (const table of tables) {
+    try {
+      await prisma.$executeRawUnsafe(
+        `SELECT setval(pg_get_serial_sequence('"${table.name}"', '${table.idCol}'), coalesce(max("${table.idCol}"), 0) + 1, false) FROM "${table.name}";`
+      );
+      console.log(`Reset sequence for ${table.name}`);
+    } catch (error) {
+      console.error(`Error resetting sequence for ${table.name}:`, error);
+    }
+  }
 }
 
 main()
