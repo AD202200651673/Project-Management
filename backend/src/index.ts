@@ -5,6 +5,7 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 /* ROUTE IMPORTS */
+import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
 import taskRoutes from "./routes/tasksRoutes.js";
 import searchRoutes from "./routes/searchRoutes.js";
@@ -27,6 +28,7 @@ app.get("/", (req, res) => {
   res.send("This is home route");
 });
 
+app.use("/auth", authRoutes);
 app.use("/projects", projectRoutes);
 app.use("/tasks", taskRoutes);
 app.use("/search", searchRoutes);

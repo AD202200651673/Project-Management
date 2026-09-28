@@ -35,6 +35,12 @@ async function deleteAllData() {
       console.error(`Error clearing data from ${tablename}:`, error);
     }
   }
+
+  try {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "User" DROP COLUMN IF EXISTS "cognitoId";`);
+  } catch (error) {
+    console.error("Error dropping cognitoId column:", error);
+  }
 }
 
 async function main() {

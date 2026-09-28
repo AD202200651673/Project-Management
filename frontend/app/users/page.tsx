@@ -62,6 +62,7 @@ const Users = () => {
           slots={{
             toolbar: CustomToolbar,
           }}
+          showToolbar
           className={dataGridClassNames}
           sx={dataGridSxStyles(isDarkMode)}
         />

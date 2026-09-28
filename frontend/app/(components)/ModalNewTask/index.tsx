@@ -1,7 +1,8 @@
 import Modal from "@/app/(components)/Modal";
 import { Priority, Status, useCreateTaskMutation } from "@/state/api";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { formatISO } from "date-fns";
+import { useAppSelector } from "@/app/redux";
 
 type Props = {
   isOpen: boolean;
@@ -11,6 +12,8 @@ type Props = {
 
 const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
   const [createTask, { isLoading }] = useCreateTaskMutation();
+  const currentUser = useAppSelector((state) => state.global.currentUser);
+
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<Status>(Status.ToDo);
@@ -22,8 +25,15 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
   const [assignedUserId, setAssignedUserId] = useState("");
   const [projectId, setProjectId] = useState("");
 
+  useEffect(() => {
+    if (currentUser?.userId) {
+      setAuthorUserId(String(currentUser.userId));
+    }
+  }, [currentUser]);
+
   const handleSubmit = async () => {
-    if (!title || !authorUserId || !(id !== null || projectId)) return;
+    const finalAuthorId = authorUserId ? parseInt(authorUserId) : currentUser?.userId;
+    if (!title || !finalAuthorId || !(id !== null || projectId)) return;
 
     const formattedStartDate = formatISO(new Date(startDate), {
       representation: "complete",
@@ -40,10 +50,11 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
       tags,
       startDate: formattedStartDate,
       dueDate: formattedDueDate,
-      authorUserId: parseInt(authorUserId),
-      assignedUserId: parseInt(assignedUserId),
+      authorUserId: finalAuthorId,
+      assignedUserId: assignedUserId ? parseInt(assignedUserId) : undefined,
       projectId: id !== null ? Number(id) : Number(projectId),
     });
+    onClose();
   };
 
   const isFormValid = () => {

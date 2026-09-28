@@ -48,6 +48,7 @@ const Teams = () => {
           slots={{
             toolbar: CustomToolbar,
           }}
+          showToolbar
           className={dataGridClassNames}
           sx={dataGridSxStyles(isDarkMode)}
         />

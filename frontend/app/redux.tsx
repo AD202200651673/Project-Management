@@ -63,7 +63,7 @@ export const makeStore = () => {
         serializableCheck: {
           ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
         },
-      }).concat(api.middleware),
+      }).concat(api.middleware) as any,
   });
 };
 

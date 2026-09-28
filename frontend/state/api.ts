@@ -28,7 +28,6 @@ export interface User {
   username: string;
   email: string;
   profilePictureUrl?: string;
-  cognitoId?: string;
   teamId?: number;
 }
 
@@ -67,19 +66,60 @@ export interface SearchResults {
 }
 
 export interface Team {
-  teamId: number;
+  id: number;
+  teamId?: number;
   teamName: string;
   productOwnerUserId?: number;
   projectManagerUserId?: number;
+  productOwnerUsername?: string;
+  projectManagerUsername?: string;
 }
 
 export const api = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
+    prepareHeaders: (headers, { getState }) => {
+      const token =
+        (getState() as any).global?.token ||
+        (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+      if (token) {
+        headers.set("authorization", `Bearer ${token}`);
+      }
+      return headers;
+    },
   }),
   reducerPath: "api",
-  tagTypes: ["Projects", "Tasks", "Users", "Teams"],
+  tagTypes: ["Projects", "Tasks", "Users", "Teams", "Auth"],
   endpoints: (build) => ({
+    // AUTH ENDPOINTS
+    register: build.mutation<
+      { message: string; user: User; token: string },
+      { username: string; email: string; password: string; teamId?: number }
+    >({
+      query: (body) => ({
+        url: "auth/register",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Auth"],
+    }),
+    login: build.mutation<
+      { token: string; user: User; message?: string },
+      { usernameOrEmail: string; password: string }
+    >({
+      query: (credentials) => ({
+        url: "auth/login",
+        method: "POST",
+        body: credentials,
+      }),
+      invalidatesTags: ["Auth"],
+    }),
+    getMe: build.query<{ user: User }, void>({
+      query: () => "auth/me",
+      providesTags: ["Auth"],
+    }),
+
+    // PROJECT & TASK ENDPOINTS
     getProjects: build.query<Project[], void>({
       query: () => "projects",
       providesTags: ["Projects"],
@@ -139,6 +179,9 @@ export const api = createApi({
 });
 
 export const {
+  useRegisterMutation,
+  useLoginMutation,
+  useGetMeQuery,
   useGetProjectsQuery,
   useCreateProjectMutation,
   useGetTasksQuery,
