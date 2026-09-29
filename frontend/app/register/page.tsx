@@ -52,7 +52,7 @@ export default function RegisterPage() {
       dispatch(
         setCredentials({
           user: response.user,
-          token: response.token,
+          token: response.accessToken || response.token,
         })
       );
 

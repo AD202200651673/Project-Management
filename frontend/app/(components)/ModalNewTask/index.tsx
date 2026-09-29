@@ -33,14 +33,15 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
 
   const handleSubmit = async () => {
     const finalAuthorId = authorUserId ? parseInt(authorUserId) : currentUser?.userId;
-    if (!title || !finalAuthorId || !(id !== null || projectId)) return;
+    const hasProject = (id !== null && id !== undefined && id !== "") || Boolean(projectId);
+    if (!title || !finalAuthorId || !hasProject) return;
 
-    const formattedStartDate = formatISO(new Date(startDate), {
-      representation: "complete",
-    });
-    const formattedDueDate = formatISO(new Date(dueDate), {
-      representation: "complete",
-    });
+    const formattedStartDate = startDate
+      ? formatISO(new Date(startDate), { representation: "complete" })
+      : undefined;
+    const formattedDueDate = dueDate
+      ? formatISO(new Date(dueDate), { representation: "complete" })
+      : undefined;
 
     await createTask({
       title,
@@ -52,13 +53,15 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
       dueDate: formattedDueDate,
       authorUserId: finalAuthorId,
       assignedUserId: assignedUserId ? parseInt(assignedUserId) : undefined,
-      projectId: id !== null ? Number(id) : Number(projectId),
+      projectId: id !== null && id !== undefined && id !== "" ? Number(id) : Number(projectId),
     });
     onClose();
   };
 
   const isFormValid = () => {
-    return title && authorUserId && !(id !== null || projectId);
+    const finalAuthorId = authorUserId || currentUser?.userId;
+    const hasProject = (id !== null && id !== undefined && id !== "") || Boolean(projectId);
+    return Boolean(title && finalAuthorId && hasProject);
   };
 
   const selectStyles =
@@ -154,7 +157,7 @@ const ModalNewTask = ({ isOpen, onClose, id = null }: Props) => {
           value={assignedUserId}
           onChange={(e) => setAssignedUserId(e.target.value)}
         />
-        {id === null && (
+        {!id && (
           <input
             type="text"
             className={inputStyles}

@@ -1,4 +1,11 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import {
+  BaseQueryFn,
+  createApi,
+  FetchArgs,
+  fetchBaseQuery,
+  FetchBaseQueryError,
+} from "@reduxjs/toolkit/query/react";
+import { logout, setTokens } from "./index";
 
 export interface Project {
   id: number;
@@ -75,25 +82,108 @@ export interface Team {
   projectManagerUsername?: string;
 }
 
+export interface AuthResponse {
+  message?: string;
+  accessToken: string;
+  token: string;
+  user: User;
+}
+
+export interface RefreshTokenResponse {
+  accessToken: string;
+  token: string;
+}
+
+// 1. Raw Base Query with httpOnly cookie credentials included
+const rawBaseQuery = fetchBaseQuery({
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
+  credentials: "include", // Required for sending/receiving httpOnly cookies across ports
+  prepareHeaders: (headers, { getState }) => {
+    const token =
+      (getState() as any).global?.token ||
+      (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    if (token) {
+      headers.set("authorization", `Bearer ${token}`);
+    }
+    return headers;
+  },
+});
+
+// Mutex & Promise lock to ensure only 1 token refresh happens at a time
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+// 2. Base Query with automatic silent token refresh on 401 using httpOnly cookies
+const baseQueryWithReauth: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  let result = await rawBaseQuery(args, api, extraOptions);
+
+  // If 401 Unauthorized occurs, try silent token refresh via httpOnly cookie
+  if (result.error && result.error.status === 401) {
+    const url = typeof args === "string" ? args : args.url;
+    // Don't loop if the 401 is from the refresh or login endpoint itself
+    if (url.includes("auth/refresh-token") || url.includes("auth/login")) {
+      return result;
+    }
+
+    if (!isRefreshing) {
+      isRefreshing = true;
+      refreshPromise = (async () => {
+        try {
+          const refreshResult: any = await rawBaseQuery(
+            {
+              url: "auth/refresh-token",
+              method: "POST",
+            },
+            api,
+            extraOptions
+          );
+
+          if (refreshResult.data) {
+            const newAccessToken =
+              refreshResult.data.accessToken || refreshResult.data.token;
+
+            api.dispatch(
+              setTokens({
+                token: newAccessToken,
+              })
+            );
+            return newAccessToken;
+          } else {
+            api.dispatch(logout());
+            return null;
+          }
+        } catch {
+          api.dispatch(logout());
+          return null;
+        } finally {
+          isRefreshing = false;
+          refreshPromise = null;
+        }
+      })();
+    }
+
+    const newToken = await refreshPromise;
+    if (newToken) {
+      // Retry the original query with the refreshed access token
+      result = await rawBaseQuery(args, api, extraOptions);
+    }
+  }
+
+  return result;
+};
+
 export const api = createApi({
-  baseQuery: fetchBaseQuery({
-    baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
-    prepareHeaders: (headers, { getState }) => {
-      const token =
-        (getState() as any).global?.token ||
-        (typeof window !== "undefined" ? localStorage.getItem("token") : null);
-      if (token) {
-        headers.set("authorization", `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithReauth,
   reducerPath: "api",
   tagTypes: ["Projects", "Tasks", "Users", "Teams", "Auth"],
   endpoints: (build) => ({
     // AUTH ENDPOINTS
     register: build.mutation<
-      { message: string; user: User; token: string },
+      AuthResponse,
       { username: string; email: string; password: string; teamId?: number }
     >({
       query: (body) => ({
@@ -104,13 +194,26 @@ export const api = createApi({
       invalidatesTags: ["Auth"],
     }),
     login: build.mutation<
-      { token: string; user: User; message?: string },
+      AuthResponse,
       { usernameOrEmail: string; password: string }
     >({
       query: (credentials) => ({
         url: "auth/login",
         method: "POST",
         body: credentials,
+      }),
+      invalidatesTags: ["Auth"],
+    }),
+    refreshToken: build.mutation<RefreshTokenResponse, void>({
+      query: () => ({
+        url: "auth/refresh-token",
+        method: "POST",
+      }),
+    }),
+    logoutApi: build.mutation<{ message: string }, void>({
+      query: () => ({
+        url: "auth/logout",
+        method: "POST",
       }),
       invalidatesTags: ["Auth"],
     }),
@@ -181,6 +284,8 @@ export const api = createApi({
 export const {
   useRegisterMutation,
   useLoginMutation,
+  useRefreshTokenMutation,
+  useLogoutApiMutation,
   useGetMeQuery,
   useGetProjectsQuery,
   useCreateProjectMutation,

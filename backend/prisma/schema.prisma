@@ -19,6 +19,7 @@ model User {
   password                 String?
   profilePictureUrl        String?
   teamId                   Int?
+  refreshToken             String?
   isEmailVerified          Boolean   @default(false)
   verificationToken        String?
   verificationTokenExpires DateTime?

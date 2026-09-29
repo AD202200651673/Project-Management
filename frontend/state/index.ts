@@ -16,12 +16,14 @@ const getInitialToken = () => {
   return null;
 };
 
+const initialToken = getInitialToken();
+
 const initialState: initialStateTypes = {
   isSidebarCollapsed: false,
   isDarkMode: false,
   currentUser: null,
-  token: getInitialToken(),
-  isAuthenticated: !!getInitialToken(),
+  token: initialToken,
+  isAuthenticated: !!initialToken,
 };
 
 export const globalSlice = createSlice({
@@ -41,6 +43,18 @@ export const globalSlice = createSlice({
       state.currentUser = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("token", action.payload.token);
+      }
+    },
+    setTokens: (
+      state,
+      action: PayloadAction<{ token: string }>
+    ) => {
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
+
       if (typeof window !== "undefined") {
         localStorage.setItem("token", action.payload.token);
       }
@@ -57,6 +71,7 @@ export const globalSlice = createSlice({
       state.isAuthenticated = false;
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
       }
     },
   },
@@ -66,6 +81,7 @@ export const {
   setIsSidebarCollapsed,
   setIsDarkMode,
   setCredentials,
+  setTokens,
   setCurrentUser,
   logout,
 } = globalSlice.actions;

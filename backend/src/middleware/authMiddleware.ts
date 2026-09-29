@@ -32,7 +32,10 @@ export const authenticateToken = async (
       return;
     }
 
-    const secret = process.env.JWT_SECRET || "project_management_super_secure_jwt_secret_key_2026";
+    const secret =
+      process.env.ACCESS_TOKEN_SECRET ||
+      process.env.JWT_SECRET ||
+      "project_management_access_token_secret_key_2026";
     const decoded = jwt.verify(token, secret) as JwtPayload;
 
     const user = await prisma.user.findUnique({

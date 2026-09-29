@@ -32,7 +32,7 @@ export default function LoginPage() {
       dispatch(
         setCredentials({
           user: response.user,
-          token: response.token,
+          token: response.accessToken || response.token,
         })
       );
 

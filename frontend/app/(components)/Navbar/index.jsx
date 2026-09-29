@@ -5,19 +5,27 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { logout, setIsDarkMode, setIsSidebarCollapsed } from "@/state";
+import { useLogoutApiMutation } from "@/state/api";
 
 const Navbar = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [logoutApi] = useLogoutApiMutation();
   const isSidebarCollapsed = useAppSelector(
     (state) => state.global.isSidebarCollapsed,
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
   const currentUser = useAppSelector((state) => state.global.currentUser);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      await logoutApi().unwrap();
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      dispatch(logout());
+      router.push("/login");
+    }
   };
 
   return (
