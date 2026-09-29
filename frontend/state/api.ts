@@ -41,9 +41,21 @@ export interface User {
 export interface Attachment {
   id: number;
   fileURL: string;
-  fileName: string;
+  fileName?: string;
   taskId: number;
   uploadedById: number;
+}
+
+export interface Comment {
+  id: number;
+  text: string;
+  taskId: number;
+  userId: number;
+  user?: {
+    userId: number;
+    username: string;
+    profilePictureUrl?: string;
+  };
 }
 
 export interface Task {
@@ -80,6 +92,7 @@ export interface Team {
   projectManagerUserId?: number;
   productOwnerUsername?: string;
   projectManagerUsername?: string;
+  user?: User[];
 }
 
 export interface AuthResponse {
@@ -179,7 +192,7 @@ const baseQueryWithReauth: BaseQueryFn<
 export const api = createApi({
   baseQuery: baseQueryWithReauth,
   reducerPath: "api",
-  tagTypes: ["Projects", "Tasks", "Users", "Teams", "Auth"],
+  tagTypes: ["Projects", "Tasks", "Users", "Teams", "Auth", "Comments"],
   endpoints: (build) => ({
     // AUTH ENDPOINTS
     register: build.mutation<
@@ -222,10 +235,16 @@ export const api = createApi({
       providesTags: ["Auth"],
     }),
 
-    // PROJECT & TASK ENDPOINTS
+    // PROJECT ENDPOINTS
     getProjects: build.query<Project[], void>({
       query: () => "projects",
       providesTags: ["Projects"],
+    }),
+    getProjectById: build.query<Project, number>({
+      query: (projectId) => `projects/${projectId}`,
+      providesTags: (result, error, projectId) => [
+        { type: "Projects", id: projectId },
+      ],
     }),
     createProject: build.mutation<Project, Partial<Project>>({
       query: (project) => ({
@@ -235,12 +254,44 @@ export const api = createApi({
       }),
       invalidatesTags: ["Projects"],
     }),
-    getTasks: build.query<Task[], { projectId: number }>({
-      query: ({ projectId }) => `tasks?projectId=${projectId}`,
+    updateProject: build.mutation<Project, Partial<Project> & { id: number }>({
+      query: ({ id, ...project }) => ({
+        url: `projects/${id}`,
+        method: "PUT",
+        body: project,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Projects", id },
+        "Projects",
+      ],
+    }),
+    deleteProject: build.mutation<{ message: string }, number>({
+      query: (projectId) => ({
+        url: `projects/${projectId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Projects", "Tasks"],
+    }),
+
+    // TASK ENDPOINTS
+    getTasks: build.query<Task[], { projectId?: number } | void>({
+      query: (params) => {
+        const queryParams = params?.projectId
+          ? `?projectId=${params.projectId}`
+          : "";
+        return `tasks${queryParams}`;
+      },
       providesTags: (result) =>
         result
-          ? result.map(({ id }) => ({ type: "Tasks" as const, id }))
-          : [{ type: "Tasks" as const }],
+          ? [
+              ...result.map(({ id }) => ({ type: "Tasks" as const, id })),
+              { type: "Tasks" as const, id: "LIST" },
+            ]
+          : [{ type: "Tasks" as const, id: "LIST" }],
+    }),
+    getTaskById: build.query<Task, number>({
+      query: (taskId) => `tasks/${taskId}`,
+      providesTags: (result, error, taskId) => [{ type: "Tasks", id: taskId }],
     }),
     getTasksByUser: build.query<Task[], number>({
       query: (userId) => `tasks/user/${userId}`,
@@ -257,6 +308,17 @@ export const api = createApi({
       }),
       invalidatesTags: ["Tasks"],
     }),
+    updateTask: build.mutation<Task, Partial<Task> & { id: number }>({
+      query: ({ id, ...patch }) => ({
+        url: `tasks/${id}`,
+        method: "PUT",
+        body: patch,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Tasks", id },
+        "Tasks",
+      ],
+    }),
     updateTaskStatus: build.mutation<Task, { taskId: number; status: string }>({
       query: ({ taskId, status }) => ({
         url: `tasks/${taskId}/status`,
@@ -267,6 +329,50 @@ export const api = createApi({
         { type: "Tasks", id: taskId },
       ],
     }),
+    deleteTask: build.mutation<{ message: string }, number>({
+      query: (taskId) => ({
+        url: `tasks/${taskId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Tasks"],
+    }),
+
+    // COMMENTS ENDPOINTS
+    getTaskComments: build.query<Comment[], number>({
+      query: (taskId) => `tasks/${taskId}/comments`,
+      providesTags: (result, error, taskId) => [
+        { type: "Comments", id: taskId },
+      ],
+    }),
+    createTaskComment: build.mutation<
+      Comment,
+      { taskId: number; text: string; userId?: number }
+    >({
+      query: ({ taskId, text, userId }) => ({
+        url: `tasks/${taskId}/comments`,
+        method: "POST",
+        body: { text, userId },
+      }),
+      invalidatesTags: (result, error, { taskId }) => [
+        { type: "Comments", id: taskId },
+        { type: "Tasks", id: taskId },
+      ],
+    }),
+    deleteTaskComment: build.mutation<
+      { message: string },
+      { commentId: number; taskId: number }
+    >({
+      query: ({ commentId }) => ({
+        url: `tasks/comments/${commentId}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: (result, error, { taskId }) => [
+        { type: "Comments", id: taskId },
+        { type: "Tasks", id: taskId },
+      ],
+    }),
+
+    // USER & TEAM ENDPOINTS
     getUsers: build.query<User[], void>({
       query: () => "users",
       providesTags: ["Users"],
@@ -274,6 +380,28 @@ export const api = createApi({
     getTeams: build.query<Team[], void>({
       query: () => "teams",
       providesTags: ["Teams"],
+    }),
+    createTeam: build.mutation<
+      Team,
+      { teamName: string; productOwnerUserId?: number; projectManagerUserId?: number }
+    >({
+      query: (body) => ({
+        url: "teams",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Teams"],
+    }),
+    assignUserToTeam: build.mutation<
+      User,
+      { teamId: number; userId: number }
+    >({
+      query: ({ teamId, userId }) => ({
+        url: `teams/${teamId}/members`,
+        method: "PATCH",
+        body: { userId },
+      }),
+      invalidatesTags: ["Teams", "Users"],
     }),
     search: build.query<SearchResults, string>({
       query: (query) => `search?query=${query}`,
@@ -288,12 +416,23 @@ export const {
   useLogoutApiMutation,
   useGetMeQuery,
   useGetProjectsQuery,
+  useGetProjectByIdQuery,
   useCreateProjectMutation,
+  useUpdateProjectMutation,
+  useDeleteProjectMutation,
   useGetTasksQuery,
+  useGetTaskByIdQuery,
   useCreateTaskMutation,
+  useUpdateTaskMutation,
   useUpdateTaskStatusMutation,
+  useDeleteTaskMutation,
+  useGetTaskCommentsQuery,
+  useCreateTaskCommentMutation,
+  useDeleteTaskCommentMutation,
   useSearchQuery,
   useGetUsersQuery,
   useGetTeamsQuery,
+  useCreateTeamMutation,
+  useAssignUserToTeamMutation,
   useGetTasksByUserQuery,
 } = api;

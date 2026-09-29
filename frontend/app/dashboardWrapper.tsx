@@ -8,6 +8,8 @@ import StoreProvider, { useAppDispatch, useAppSelector } from "../app/redux";
 import { useGetMeQuery } from "@/state/api";
 import { setCurrentUser, logout } from "@/state";
 
+import { Toaster } from "@/app/(components)/Toast";
+
 const publicRoutes = ["/login", "/register"];
 
 const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
@@ -52,7 +54,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
   }, [isPublicRoute, token, router]);
 
   if (isPublicRoute) {
-    return <>{children}</>;
+    return (
+      <>
+        {children}
+        <Toaster />
+      </>
+    );
   }
 
   if (!token) {
@@ -70,6 +77,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
         <Navbar />
         {children}
       </main>
+      <Toaster />
     </div>
   );
 };

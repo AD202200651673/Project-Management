@@ -1,11 +1,11 @@
-import React from "react";
-import { LogOut, Menu, Moon, Search, Settings, Sun, User as UserIcon } from "lucide-react";
+import React, { useState } from "react";
+import { LogOut, Menu, Moon, Search, Settings, Sun } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useAppDispatch, useAppSelector } from "@/app/redux";
 import { logout, setIsDarkMode, setIsSidebarCollapsed } from "@/state";
 import { useLogoutApiMutation } from "@/state/api";
+import UserAvatar from "@/app/(components)/UserAvatar";
 
 const Navbar = () => {
   const router = useRouter();
@@ -16,6 +16,15 @@ const Navbar = () => {
   );
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
   const currentUser = useAppSelector((state) => state.global.currentUser);
+
+  const [headerSearch, setHeaderSearch] = useState("");
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    if (headerSearch.trim()) {
+      router.push(`/search?query=${encodeURIComponent(headerSearch.trim())}`);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -35,24 +44,31 @@ const Navbar = () => {
         {!isSidebarCollapsed ? null : (
           <button
             onClick={() => dispatch(setIsSidebarCollapsed(!isSidebarCollapsed))}
+            title="Expand Sidebar"
           >
             <Menu className="h-8 w-8 dark:text-white" />
           </button>
         )}
-        <div className="relative flex h-min w-[200px]">
-          <Search className="absolute left-[4px] top-1/2 mr-2 h-5 w-5 -translate-y-1/2 transform cursor-pointer dark:text-white" />
-          <input
-            className="w-full rounded border-none bg-gray-100 p-2 pl-8 placeholder-gray-500 focus:border-transparent focus:outline-none dark:bg-gray-700 dark:text-white dark:placeholder-white"
-            type="search"
-            placeholder="Search..."
+        <form onSubmit={handleSearchSubmit} className="relative flex h-min w-[240px]">
+          <Search
+            onClick={handleSearchSubmit}
+            className="absolute left-[8px] top-1/2 h-4 w-4 -translate-y-1/2 transform cursor-pointer text-gray-400 hover:text-blue-primary dark:text-gray-300"
           />
-        </div>
+          <input
+            className="w-full rounded-lg border border-transparent bg-gray-100 py-1.5 pl-8 pr-3 text-xs placeholder-gray-500 transition focus:border-blue-500 focus:bg-white focus:outline-none dark:bg-gray-800 dark:text-white dark:placeholder-gray-400 dark:focus:bg-dark-secondary"
+            type="search"
+            placeholder="Search projects, tasks..."
+            value={headerSearch}
+            onChange={(e) => setHeaderSearch(e.target.value)}
+          />
+        </form>
       </div>
 
       {/* Icons & User Profile */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => dispatch(setIsDarkMode(!isDarkMode))}
+          title="Toggle Theme"
           className={
             isDarkMode
               ? `rounded p-2 dark:hover:bg-gray-700`
@@ -60,38 +76,27 @@ const Navbar = () => {
           }
         >
           {isDarkMode ? (
-            <Sun className="h-6 w-6 cursor-pointer dark:text-white" />
+            <Sun className="h-5 w-5 cursor-pointer dark:text-white" />
           ) : (
-            <Moon className="h-6 w-6 cursor-pointer dark:text-white" />
+            <Moon className="h-5 w-5 cursor-pointer text-gray-700" />
           )}
         </button>
         <Link
           href="/settings"
+          title="Settings"
           className={
             isDarkMode
               ? `h-min w-min rounded p-2 dark:hover:bg-gray-700`
               : `h-min w-min rounded p-2 hover:bg-gray-100`
           }
         >
-          <Settings className="h-6 w-6 cursor-pointer dark:text-white" />
+          <Settings className="h-5 w-5 cursor-pointer text-gray-700 dark:text-white" />
         </Link>
         <div className="ml-1 mr-2 hidden min-h-[2em] w-[0.1rem] bg-gray-200 dark:bg-stroke-dark md:inline-block"></div>
 
-        {/* User Info */}
+        {/* User Info with Initials Avatar */}
         <div className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-gray-200 bg-gray-100 dark:border-stroke-dark dark:bg-dark-tertiary">
-            {currentUser?.profilePictureUrl ? (
-              <Image
-                src={`/${currentUser.profilePictureUrl}`}
-                alt={currentUser.username || "User"}
-                width={36}
-                height={36}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              <UserIcon className="h-5 w-5 text-gray-500 dark:text-gray-300" />
-            )}
-          </div>
+          <UserAvatar username={currentUser?.username} size="md" />
           <span className="hidden text-sm font-semibold text-gray-800 dark:text-white md:inline-block">
             {currentUser?.username || "Guest"}
           </span>

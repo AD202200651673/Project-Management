@@ -58,58 +58,130 @@ body {
   font-size: 0.875rem;
 }
 
-/* TIMELINE STYLING */
+/* TIMELINE & GANTT STYLING */
+.timeline {
+  font-family: inherit;
+}
+
 .timeline ._3_ygE {
-  @apply rounded-tl-md border border-r-0 border-[#e6e4e4] dark:border-stroke-dark;
+  border-top-left-radius: 1rem;
+  border: 1px solid #e2e8f0;
+  border-right: 0;
+}
+.dark .timeline ._3_ygE {
+  border-color: #2d3135;
 }
 
 .timeline ._2eZzQ {
-  @apply border-[#e6e4e4] dark:border-stroke-dark;
+  border-color: #e2e8f0;
+}
+.dark .timeline ._2eZzQ {
+  border-color: #2d3135;
 }
 
 .timeline ._2dZTy {
-  @apply fill-white dark:fill-dark-secondary;
+  fill: #ffffff;
+}
+.dark .timeline ._2dZTy {
+  fill: #1d1f21;
 }
 
 .timeline ._2dZTy:nth-child(even) {
-  @apply fill-[#f5f5f5] dark:fill-dark-tertiary;
+  fill: #f8fafc;
+}
+.dark .timeline ._2dZTy:nth-child(even) {
+  fill: #181a1c;
 }
 
 .timeline ._35nLX {
-  @apply fill-white stroke-[#e6e4e4] dark:fill-dark-secondary dark:stroke-stroke-dark;
+  fill: #f8fafc;
+  stroke: #e2e8f0;
+}
+.dark .timeline ._35nLX {
+  fill: #181a1c;
+  stroke: #2d3135;
 }
 
 .timeline ._9w8d5 {
-  @apply fill-[#333] dark:fill-white;
+  fill: #334155;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+.dark .timeline ._9w8d5 {
+  fill: #cbd5e1;
 }
 
 .timeline ._34SS0 {
-  @apply bg-white dark:bg-dark-secondary;
+  background-color: #ffffff;
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+.dark .timeline ._34SS0 {
+  background-color: #1d1f21;
+  color: #e2e8f0;
+  border-bottom: 1px solid #26292d;
 }
 
 .timeline ._34SS0:nth-of-type(even) {
-  @apply bg-[#f5f5f5] dark:bg-dark-tertiary;
+  background-color: #f8fafc;
+}
+.dark .timeline ._34SS0:nth-of-type(even) {
+  background-color: #181a1c;
 }
 
 .timeline ._RuwuK,
 .timeline ._3rUKi,
 .timeline ._1rLuZ {
-  @apply stroke-[#e6e4e4] dark:stroke-stroke-dark;
+  stroke: #e2e8f0;
+}
+.dark .timeline ._RuwuK,
+.dark .timeline ._3rUKi,
+.dark .timeline ._1rLuZ {
+  stroke: #26292d;
 }
 
 .timeline ._3ZbQT {
-  @apply border-l-0 border-[#e6e4e4] dark:border-stroke-dark;
+  border-left: 0;
+  border-color: #e2e8f0;
+}
+.dark .timeline ._3ZbQT {
+  border-color: #2d3135;
 }
 
 .timeline ._3T42e {
-  @apply bg-white dark:bg-dark-bg;
+  background-color: #ffffff;
+}
+.dark .timeline ._3T42e {
+  background-color: #1d1f21;
 }
 
 .timeline ._29NTg {
-  @apply dark:text-neutral-500;
+  color: #64748b;
+}
+.dark .timeline ._29NTg {
+  color: #94a3b8;
+}
+
+.timeline text {
+  font-family: inherit !important;
 }
 
 ::-webkit-scrollbar {
-  width: 0px;
-  height: 0px;
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(156, 163, 175, 0.4);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(156, 163, 175, 0.6);
 }
