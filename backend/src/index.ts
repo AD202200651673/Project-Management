@@ -5,13 +5,8 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
-/* ROUTE IMPORTS */
-import authRoutes from "./routes/authRoutes.js";
-import projectRoutes from "./routes/projectRoutes.js";
-import taskRoutes from "./routes/tasksRoutes.js";
-import searchRoutes from "./routes/searchRoutes.js";
-import userRoutes from "./routes/userRoutes.js";
-import teamRoutes from "./routes/teamRoutes.js";
+import routes from "./routes/index.js";
+import { errorHandler } from "./middleware/errorMiddleware.js";
 
 /* CONFIGURATIONS */
 dotenv.config();
@@ -30,20 +25,19 @@ app.use(
   })
 );
 
-/* ROUTES */
+/* HEALTH CHECK */
 app.get("/", (req, res) => {
-  res.send("This is home route");
+  res.send("Project Management API is running");
 });
 
-app.use("/auth", authRoutes);
-app.use("/projects", projectRoutes);
-app.use("/tasks", taskRoutes);
-app.use("/search", searchRoutes);
-app.use("/users", userRoutes);
-app.use("/teams", teamRoutes);
+/* API ROUTES */
+app.use("/", routes);
+
+/* ERROR HANDLER */
+app.use(errorHandler);
 
 /* SERVER */
-const port = Number(process.env.PORT) || 3000;
+const port = Number(process.env.PORT) || 8000;
 app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
 });

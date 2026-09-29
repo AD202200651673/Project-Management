@@ -1,61 +1,13 @@
 import type { Request, Response } from "express";
-import { prisma } from "../prisma.js";
+import { TeamService } from "../services/teamService.js";
+import { asyncHandler } from "../middleware/errorMiddleware.js";
 
-export const getTeams = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const teams = await prisma.team.findMany({
-      include: {
-        user: {
-          select: {
-            userId: true,
-            username: true,
-            email: true,
-            profilePictureUrl: true,
-          },
-        },
-      },
-      orderBy: { id: "asc" },
-    });
+export const getTeams = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const teamsWithUsernames = await TeamService.getTeams();
+  res.json(teamsWithUsernames);
+});
 
-    const teamsWithUsernames = await Promise.all(
-      teams.map(async (team: any) => {
-        let productOwner = null;
-        let projectManager = null;
-
-        if (team.productOwnerUserId) {
-          productOwner = await prisma.user.findUnique({
-            where: { userId: team.productOwnerUserId },
-            select: { username: true },
-          });
-        }
-
-        if (team.projectManagerUserId) {
-          projectManager = await prisma.user.findUnique({
-            where: { userId: team.projectManagerUserId },
-            select: { username: true },
-          });
-        }
-
-        return {
-          ...team,
-          productOwnerUsername: productOwner?.username,
-          projectManagerUsername: projectManager?.username,
-        };
-      })
-    );
-
-    res.json(teamsWithUsernames);
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error retrieving teams: ${error.message}` });
-  }
-};
-
-export const createTeam = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const createTeam = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const { teamName, productOwnerUserId, projectManagerUserId } = req.body ?? {};
 
   if (!teamName) {
@@ -63,47 +15,28 @@ export const createTeam = async (
     return;
   }
 
-  try {
-    const newTeam = await prisma.team.create({
-      data: {
-        teamName,
-        productOwnerUserId: productOwnerUserId ? Number(productOwnerUserId) : null,
-        projectManagerUserId: projectManagerUserId
-          ? Number(projectManagerUserId)
-          : null,
-      },
-    });
+  const newTeam = await TeamService.createTeam({
+    teamName,
+    productOwnerUserId,
+    projectManagerUserId,
+  });
 
-    res.status(201).json(newTeam);
-  } catch (error: any) {
-    res.status(500).json({ message: `Error creating team: ${error.message}` });
-  }
-};
+  res.status(201).json(newTeam);
+});
 
-export const assignUserToTeam = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const assignUserToTeam = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const { teamId } = req.params;
-  const { userId } = req.body;
+  const { userId } = req.body ?? {};
 
   if (!userId) {
     res.status(400).json({ message: "User ID is required" });
     return;
   }
 
-  try {
-    const updatedUser = await prisma.user.update({
-      where: { userId: Number(userId) },
-      data: {
-        teamId: teamId ? Number(teamId) : null,
-      },
-    });
+  const updatedUser = await TeamService.assignUserToTeam(
+    Number(teamId),
+    Number(userId)
+  );
 
-    res.json(updatedUser);
-  } catch (error: any) {
-    res
-      .status(500)
-      .json({ message: `Error assigning user to team: ${error.message}` });
-  }
-};
+  res.json(updatedUser);
+});
