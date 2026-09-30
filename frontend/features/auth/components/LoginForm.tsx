@@ -81,7 +81,7 @@ export function LoginForm() {
                 type="text"
                 required
                 className={inputStyles}
-                placeholder="alice@example.com or AliceJones"
+                placeholder="you@example.com or username"
                 value={usernameOrEmail}
                 onChange={(e) => setUsernameOrEmail(e.target.value)}
               />
@@ -114,33 +114,6 @@ export function LoginForm() {
             <ArrowRight className="h-4 w-4" />
           </button>
         </form>
-
-        {/* Demo Accounts Quick Login */}
-        <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50/50 p-3 text-xs text-gray-600 dark:border-stroke-dark dark:bg-dark-tertiary/40 dark:text-gray-400">
-          <p className="font-semibold text-gray-800 dark:text-gray-200">💡 Demo Accounts:</p>
-          <div className="mt-1 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setUsernameOrEmail("AliceJones");
-                setPassword("password123");
-              }}
-              className="rounded bg-gray-200 px-2 py-1 text-gray-800 hover:bg-gray-300 dark:bg-dark-tertiary dark:text-gray-200"
-            >
-              AliceJones
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setUsernameOrEmail("BobSmith");
-                setPassword("password123");
-              }}
-              className="rounded bg-gray-200 px-2 py-1 text-gray-800 hover:bg-gray-300 dark:bg-dark-tertiary dark:text-gray-200"
-            >
-              BobSmith
-            </button>
-          </div>
-        </div>
 
         <p className="text-center text-sm text-gray-600 dark:text-gray-400">
           Don&apos;t have an account?{" "}

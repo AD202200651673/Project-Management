@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -27,7 +24,6 @@ model User {
   authoredTasks   Task[]           @relation("TaskAuthor")
   assignedTasks   Task[]           @relation("TaskAssignee")
   taskAssignments TaskAssignment[]
-  attachments     Attachment[]
   comments        Comment[]
   team            Team?            @relation(fields: [teamId], references: [id])
 }
@@ -77,7 +73,6 @@ model Task {
   author          User             @relation("TaskAuthor", fields: [authorUserId], references: [userId])
   assignee        User?            @relation("TaskAssignee", fields: [assignedUserId], references: [userId])
   taskAssignments TaskAssignment[]
-  attachments     Attachment[]
   comments        Comment[]
 }
 
@@ -88,17 +83,6 @@ model TaskAssignment {
 
   user User @relation(fields: [userId], references: [userId])
   task Task @relation(fields: [taskId], references: [id])
-}
-
-model Attachment {
-  id           Int     @id @default(autoincrement())
-  fileURL      String
-  fileName     String?
-  taskId       Int
-  uploadedById Int
-
-  task       Task @relation(fields: [taskId], references: [id])
-  uploadedBy User @relation(fields: [uploadedById], references: [userId])
 }
 
 model Comment {

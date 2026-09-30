@@ -28,7 +28,6 @@ const taskIncludeConfig = {
       },
     },
   },
-  attachments: true,
 };
 
 export class TaskService {
@@ -142,7 +141,6 @@ export class TaskService {
 
   static async deleteTask(taskId: number) {
     await prisma.comment.deleteMany({ where: { taskId } });
-    await prisma.attachment.deleteMany({ where: { taskId } });
     await prisma.taskAssignment.deleteMany({ where: { taskId } });
     return prisma.task.delete({ where: { id: taskId } });
   }

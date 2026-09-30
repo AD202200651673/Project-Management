@@ -15,14 +15,6 @@ export enum Status {
   Completed = "Completed",
 }
 
-export interface Attachment {
-  id: number;
-  fileURL: string;
-  fileName: string;
-  taskId: number;
-  uploadedById: number;
-}
-
 export interface Comment {
   id: number;
   text: string;
@@ -53,5 +45,4 @@ export interface Task {
   author?: User;
   assignee?: User;
   comments?: Comment[];
-  attachments?: Attachment[];
 }

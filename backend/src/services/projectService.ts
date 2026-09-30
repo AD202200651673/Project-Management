@@ -66,7 +66,6 @@ export class ProjectService {
     const taskIds = tasks.map((t) => t.id);
 
     await prisma.comment.deleteMany({ where: { taskId: { in: taskIds } } });
-    await prisma.attachment.deleteMany({ where: { taskId: { in: taskIds } } });
     await prisma.taskAssignment.deleteMany({ where: { taskId: { in: taskIds } } });
     await prisma.task.deleteMany({ where: { projectId } });
     await prisma.projectTeam.deleteMany({ where: { projectId } });
